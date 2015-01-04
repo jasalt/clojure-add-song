@@ -5,6 +5,7 @@
    [clojure.string         :as string]
    [net.cgrand.enlive-html :as enlive]
    [clj-yaml.core          :as yaml]
+   [clj-http.client        :as client]
    ))
 
 
