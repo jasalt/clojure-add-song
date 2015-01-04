@@ -17,8 +17,6 @@
 (defn scrape-somafm
   "Scrape SomaFM radio network channel"
   [station]
-
-  ;;TODO get station
   (let [html (enlive/html-resource (io/as-url
                                     (station :song-history-url)))
         song-elem (nth (enlive/select html [:tr]) 2)
@@ -35,9 +33,11 @@
 (defn scrape-station
   "Pass station by network to right scraper"
   [station]
-  (let [station-network-scrapers {:SomaFM (scrape-somafm station)
-                                  :dnbradio.com nil}]
-    (station-network-scrapers (keyword (station :network)))
+  ;; TODO dnbradio.com scraper
+  (let [station-network-scrapers {:SomaFM scrape-somafm}
+        scraper (get station-network-scrapers
+                         (keyword (station :network)))]
+    (if scraper (scraper station))
     )
   )
 
