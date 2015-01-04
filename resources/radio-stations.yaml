@@ -1,0 +1,13 @@
+# Example station data for application
+stations:
+  - name: Groove Salad
+    network: SomaFM
+    song history url: http://somafm.com/groovesalad/songhistory.html
+  - name: Deep Space One
+    network: SomaFM
+    song history url: http://somafm.com/deepspaceone/songhistory.html
+  - name: DnB Radio
+    network: dnbradio.com
+    song history url: http://dnbradio.com/
+    dev note: Sometimes plays live shows without song-histories
+    
