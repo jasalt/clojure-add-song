@@ -37,8 +37,8 @@
   ;; TODO dnbradio.com scraper
   (let [station-network-scrapers {:SomaFM scrape-somafm}
         scraper (get station-network-scrapers
-                         (keyword (station :network)))]
-    (if scraper (scraper station))
+                     (keyword (station :network)))]
+    (if scraper (merge (scraper station) station))
     )
   )
 
@@ -54,16 +54,28 @@
     )
   )
 
+(defn print-help
+  []
+  ;;TODO
+  (println "Invalid input")
+  (println "Usage: add-song station_acronym")
+  )
+
+(defn print-success
+  [result]
+  (println (str "Playing: " (result :artist) " - " (result :title)
+                " @ " (result :network) " " (result :station)))
+  )
+
 (defn -main
   [& args]
 
-  (if (and (= (count args) 1)
-           (process-input (first args)
-                          (read-parse-yaml "./radio-stations.yaml")))
-    (println "Valid input! :))))")
-    (println "Invalid input :(")
+  (if (= (count args) 1)
+    (let [result
+          (do (process-input (first args)
+                              (read-parse-yaml "./radio-stations.yaml")))]
+      (if result (print-success result) (print-help))
+      )
+    (print-help)
     )
-
-  ;; TODO add help, generate station list...
-  ;; usage: add-song station_acronym
   )

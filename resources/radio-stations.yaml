@@ -1,14 +1,14 @@
 # Example station data for application
 stations:
-  - name: Groove Salad
+  - station: Groove Salad
     network: SomaFM
     song-history-url: http://somafm.com/groovesalad/songhistory.html
     acronym: gs 
-  - name: Deep Space One
+  - station: Deep Space One
     network: SomaFM
     song-history-url: http://somafm.com/deepspaceone/songhistory.html
     acronym: dso
-  - name: DnB Radio
+  - station: DnB Radio
     network: dnbradio.com
     song-history-url: http://dnbradio.com/
     dev-note: Sometimes plays live shows without song-histories
