@@ -33,8 +33,8 @@
 
 (defn validate-input
   [input-acronym station-list]
-  (some true? (map #(= input-acronym (% :acronym)) (station-list :stations)))
-  )
+  (->>(map #(if (= input-acronym (% :acronym)) %) (station-list :stations))
+      (filter identity) first))
 
 (defn -main
   [& args]
