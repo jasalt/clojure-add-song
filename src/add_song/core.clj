@@ -1,10 +1,10 @@
 (ns add-song.core
-  (:gen-class))
-
-(require ['net.cgrand.enlive-html :as 'enlive])
-(require ['clojure.java.io :as 'java])
-(require ['clojure.string :as 'string])
-
+  "Raw clojure code."
+  (:require [net.cgrand.enlive-html :as enlive]
+            [clojure.java.io        :as java]
+            [clojure.string         :as string]
+            [clj-yaml.core          :as yaml]
+            :verbose))
 
 (defn scrape-somafm
   "Get currently playing song from groove salad"
