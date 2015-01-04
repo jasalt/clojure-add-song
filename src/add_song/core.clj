@@ -1,18 +1,19 @@
 (ns add-song.core
   "Raw clojure code."
-  (:require [net.cgrand.enlive-html :as enlive]
-            [clojure.java.io        :as io]
-            [clojure.edn            :as edn]
-            [clojure.string         :as string]
-            [clj-yaml.core          :as yaml]
-            :verbose))
+  (:require
+   [clojure.java.io        :as io]
+   [clojure.string         :as string]
+   [net.cgrand.enlive-html :as enlive]
+   [clj-yaml.core          :as yaml]
+   ))
 
 
-(defn read-stations-file
-  "Read stations from yaml-file"
+(defn read-parse-yaml
+  "Read and parse yaml-file from resources folder"
   [filename]
   (-> filename io/resource slurp yaml/parse-string)
   )
+
 
 (defn scrape-somafm
   "Get currently playing song from Groove Salad"
@@ -27,12 +28,24 @@
      :artist (nth info-texts 1)
      :title (nth info-texts 2)
      :album (nth info-texts 3)
-     }
-    )
+     }))
+
+
+(defn validate-input
+  [input-acronym station-list]
+  (some true? (map #(= input-acronym (% :acronym)) (station-list :stations)))
   )
 
 (defn -main
   [& args]
-  (println (scrape-somafm))
-  (println (read-stations-file "./radio-stations.yaml"))
+
+  (if (and (= (count args) 1)
+           (validate-input (first args)
+                           (read-parse-yaml "./radio-stations.yaml")))
+    (println "Valid input! :))))")
+    (println "Invalid input :(")
+    )
+
+  ;; TODO add help, generate station list...
+  ;; usage: add-song station_acronym
   )

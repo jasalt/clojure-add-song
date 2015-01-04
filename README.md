@@ -5,7 +5,7 @@ Clojure learning project / experimentation.
 
 ## Involves
 
-- [ ] Passing command line arguments
+- [x] Passing command line arguments
 
 - [x] Scraping
 
