@@ -23,24 +23,30 @@
         song-elem (nth (enlive/select html [:tr]) 2)
         info-texts (map enlive/text
                         (enlive/select song-elem [:td]))]
-
+    
     {:station-time (first (string/split (nth info-texts 0) #" "))
      :artist (nth info-texts 1)
      :title (nth info-texts 2)
      :album (nth info-texts 3)
      }))
 
-
-(defn validate-input
+(defn process-input
   [input-acronym station-list]
-  (->>(map #(if (= input-acronym (% :acronym)) %) (station-list :stations))
-      (filter identity) first))
+  (let [station (->> (map #(if (= input-acronym (% :acronym)) %)
+                          (station-list :stations))
+                     (filter identity) first)]
+    (if station
+      (do (println (scrape-somafm)) (println station) station)
+      station
+      )
+    )
+  )
 
 (defn -main
   [& args]
 
   (if (and (= (count args) 1)
-           (validate-input (first args)
+           (process-input (first args)
                            (read-parse-yaml "./radio-stations.yaml")))
     (println "Valid input! :))))")
     (println "Invalid input :(")
