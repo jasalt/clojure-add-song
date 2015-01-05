@@ -3,9 +3,13 @@
   (:require
    [clojure.java.io        :as io]
    [clojure.string         :as string]
-   [net.cgrand.enlive-html :as enlive]
+
+   [clojure.data.json      :as json]
    [clj-yaml.core          :as yaml]
+
    [clj-http.client        :as client]
+
+   [net.cgrand.enlive-html :as enlive]
    ))
 
 
@@ -54,6 +58,20 @@
     )
   )
 
+(defn post-song
+  [artist title]
+
+  (let [search-result
+        (-> (client/get
+             (str "http://ws.spotify.com/search/1/track.json?q="
+                  (str artist " " title)))
+            (:body) (json/read-str :key-fn keyword))]
+    (println (first (search-result :tracks)))
+    )
+  ;; TODO post it to playlist
+  ;; TODO if not found post string to todo.txt (etc)
+  )
+
 (defn print-help
   []
   ;;TODO
@@ -69,12 +87,17 @@
 
 (defn -main
   [& args]
-
+  ;; TODO Allow doing search by input string instead of scraping stations
   (if (= (count args) 1)
     (let [result
           (do (process-input (first args)
-                              (read-parse-yaml "./radio-stations.yaml")))]
-      (if result (print-success result) (print-help))
+                             (read-parse-yaml "./radio-stations.yaml")))]
+      (if result
+        (do (post-song (result :artist) (result :title))
+            (print-success result)
+            )
+
+        (print-help))
       )
     (print-help)
     )
