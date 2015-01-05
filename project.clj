@@ -9,6 +9,7 @@
                  [enlive "1.1.5"]
                  [clj-yaml "0.4.0"]
                  [clj-http "1.0.1"]
+                 [environ "1.0.0"]
                  ]
   :main ^:skip-aot add-song.core
   :target-path "target/%s"

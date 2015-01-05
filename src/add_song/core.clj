@@ -10,7 +10,13 @@
    [clj-http.client        :as client]
 
    [net.cgrand.enlive-html :as enlive]
+   [environ.core           :as env]
    ))
+
+
+;; Environment variables get loaded from ~/.lein/profiles.clj by lein-environ plugin
+(def spotify-client-id (env :spotify-client-id))
+(def spotify-client-secret (env :spotify-client-secret))
 
 
 (defn read-parse-yaml
