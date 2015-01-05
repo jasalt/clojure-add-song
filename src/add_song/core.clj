@@ -2,15 +2,16 @@
   "Raw clojure code."
   (:require
    [add-song.spotify.api   :as spotify]
+
    [clojure.java.io        :as io]
-   [clojure.string         :as string]
-   
+
    [environ.core           :as env]
-   
+
    [clj-yaml.core          :as yaml]
 
-   [net.cgrand.enlive-html :as enlive]
+   [add-song.scrapers.somafm :as sfm]
    )(:gen-class))
+
 
 
 ;;(def spotify-client-id (env :spotify-client-id))
@@ -23,30 +24,17 @@
   (-> filename io/resource slurp yaml/parse-string)
   )
 
-(defn scrape-somafm
-  "Scrape SomaFM radio network channel"
-  [station]
-  (let [html (enlive/html-resource (io/as-url
-                                    (station :song-history-url)))
-        song-elem (nth (enlive/select html [:tr]) 2)
-        info-texts (map enlive/text
-                        (enlive/select song-elem [:td]))]
-
-    {:station-time (first (string/split (nth info-texts 0) #" "))
-     :artist (nth info-texts 1)
-     :title (nth info-texts 2)
-     :album (nth info-texts 3)
-     })
-  )
-
 (defn scrape-station
   "Pass station by network to right scraper"
   [station]
-  ;; TODO dnbradio.com scraper
-  (let [station-network-scrapers {:SomaFM scrape-somafm}
-        scraper (get station-network-scrapers
-                     (keyword (station :network)))]
-    (if scraper (merge (scraper station) station))
+  ;;TODO dnbradio.com scraper
+  (let [station-network-scrapers {:SomaFM 'somafm}
+        scraper-ns (get station-network-scrapers
+                        (keyword (station :network)))]
+    (if scraper-ns (merge
+                    (add-song.scrapers.somafm/now-playing station)
+                    ;; TODO Select right namespace here
+                    station))
     )
   )
 
