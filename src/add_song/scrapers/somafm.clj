@@ -8,7 +8,9 @@
   )
 
 (defn now-playing
+  "Scrape now playing song from specified SomaFM station"
   [station]
+  (print station)
   (let [html (enlive/html-resource (io/as-url
                                     (station :song-history-url)))
         song-elem (nth (enlive/select html [:tr]) 2)

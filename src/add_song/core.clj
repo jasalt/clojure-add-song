@@ -1,21 +1,14 @@
 (ns add-song.core
-  "Raw clojure code."
+  "Load setup-file, parse command line arguments, do stuff."
   (:require
-   [add-song.spotify.api   :as spotify]
-
+   ;; Import libraries and alias namespaces nicely with :as keyword
    [clojure.java.io        :as io]
-
-   [environ.core           :as env]
-
    [clj-yaml.core          :as yaml]
 
+   ;; Own modules/namespaces
+   [add-song.spotify.api   :as spotify]
    [add-song.scrapers.somafm :as sfm]
    )(:gen-class))
-
-
-
-;;(def spotify-client-id (env :spotify-client-id))
-;;(def spotify-client-secret (env :spotify-client-secret))
 
 
 (defn read-parse-yaml
@@ -39,6 +32,7 @@
   )
 
 (defn process-input
+  "Check that input station acronym matches one in station list."
   [input-acronym station-list]
   (let [station (->> (map #(if (= input-acronym (% :acronym)) %)
                           (station-list :stations))
@@ -51,8 +45,8 @@
   )
 
 (defn post-song
+  "Temporary function that calls spotify-module"
   [artist title]
-
   (let [search-result (spotify/search-tracks artist title)]
     (println (first (search-result :tracks)))
     )
@@ -74,8 +68,10 @@
   )
 
 (defn -main
+  "Does simple validation for command argument and does stuff with it.
+  TODO refactor."
   [& args]
-  ;; TODO Allow doing search by input string instead of scraping stations
+
   (if (= (count args) 1)
     (let [result
           (do (process-input (first args)

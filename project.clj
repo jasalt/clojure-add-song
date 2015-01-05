@@ -1,8 +1,11 @@
+;; Leiningen build tool project setup-file
 (defproject add-song "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+  ;; External libraries/dependecies are defined here and resolved beautifully by
+  ;; leiningen by issuing `lein deps', `lein run' or `lein repl' command. 
   :dependencies [
                  [org.clojure/clojure "1.6.0"]
                  [org.clojure/data.json "0.2.5"]
