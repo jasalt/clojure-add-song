@@ -1,22 +1,20 @@
 (ns add-song.core
   "Raw clojure code."
   (:require
+   [add-song.spotify.api   :as spotify]
    [clojure.java.io        :as io]
    [clojure.string         :as string]
-
-   [clojure.data.json      :as json]
+   
+   [environ.core           :as env]
+   
    [clj-yaml.core          :as yaml]
 
-   [clj-http.client        :as client]
-
    [net.cgrand.enlive-html :as enlive]
-   [environ.core           :as env]
-   ))
+   )(:gen-class))
 
 
-;; Environment variables get loaded from ~/.lein/profiles.clj by lein-environ plugin
-(def spotify-client-id (env :spotify-client-id))
-(def spotify-client-secret (env :spotify-client-secret))
+;;(def spotify-client-id (env :spotify-client-id))
+;;(def spotify-client-secret (env :spotify-client-secret))
 
 
 (defn read-parse-yaml
@@ -67,14 +65,10 @@
 (defn post-song
   [artist title]
 
-  (let [search-result
-        (-> (client/get
-             (str "http://ws.spotify.com/search/1/track.json?q="
-                  (str artist " " title)))
-            (:body) (json/read-str :key-fn keyword))]
+  (let [search-result (spotify/search-tracks artist title)]
     (println (first (search-result :tracks)))
     )
-  ;; TODO post it to playlist
+  ;; TODO post to user playlist if song found
   ;; TODO if not found post string to todo.txt (etc)
   )
 
