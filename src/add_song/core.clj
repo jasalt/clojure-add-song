@@ -28,13 +28,13 @@
   "Pass station by network to right scraper"
   [station]
   ;;TODO dnbradio.com scraper
-  (let [station-network-scrapers {:SomaFM 'somafm}
-        scraper-ns (get station-network-scrapers
-                        (keyword (station :network)))]
-    (if scraper-ns (merge
-                    (add-song.scrapers.somafm/now-playing station)
-                    ;; TODO Select right namespace here
-                    station))
+  (let [station-network-scrapers
+        {:SomaFM #(add-song.scrapers.somafm/now-playing %)}
+
+        scraper (get station-network-scrapers
+                     (keyword (station :network)))]
+
+    (merge (scraper station) station)
     )
   )
 
