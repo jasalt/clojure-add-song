@@ -6,8 +6,10 @@
    [environ.core           :refer [env]]
    [ring.adapter.jetty     :as jetty]
    [clj-time.local         :as l]
+   [clojure.java.browse    :as browser]
    clojure.pprint
    ))
+
 
 
 ;; Load environment variables from ~/.lein/profiles.clj with lein-environ
@@ -15,6 +17,13 @@
 (def spotify-client-id (env :spotify-client-id))
 (def spotify-client-secret (env :spotify-client-secret))
 
+(import [java.net URLEncoder])
+(defn encode-params [request-params]
+
+  (let [encode #(URLEncoder/encode (str %) "UTF-8")
+        coded (for [[n v] request-params] (str (encode n) "=" (encode
+                                                               v)))]
+    (apply str (interpose "&" coded))))
 
 (defn search-tracks
   "Search track from public Spotify web api"
@@ -25,13 +34,15 @@
       (:body) (json/read-str :key-fn keyword)) )
 
 
-(defn serve-permission-page
+(defn serve-callback-page
   "Show permission page for user"
-  [auth-req-html]
+  []
 
   (def result-promise (promise))
   (defonce server (jetty/run-jetty #'app {:port 8080 :join? false}))
   (defn app [request]
+
+    ;; Loggin utility
     (def server-log-file (clojure.java.io/writer "server.log" :append true))
     (defn log-server
       [what]
@@ -41,21 +52,18 @@
         (clojure.pprint/pprint what)))
 
     (log-server request)
+    
     (if (= (request :uri) "/callback")
       (do (log-server "CALLBACK!")
           ;; Continue with callback response
           (deliver result-promise request)
           (.stop server)
           )
-      (do (log-server "Serve Spotify stuff")
-          ;;TODO need to pass headers and other stuff?
-          {:status 200
-           :headers {"Content-Type" "text/html"}
-           :body auth-req-html})))
+      {:status 200
+       :headers {"Content-Type" "text/html"}
+       :body "Nothing here... Go to /callback instead."}))
 
   (.start server)
-
-  (println "Started server")
 
   ;; Wait for servers answer from other thread
   @result-promise
@@ -65,21 +73,24 @@
   "TODO First authorization step described in
   https://developer.spotify.com/web-api/authorization-guide/"
   []
-  ;; OAuth dance, store tokens, auto refresh expiring tokens
-  (let [authorization-request
-        (client/get
-         "https://accounts.spotify.com/authorize"
-         {:query-params
-          {:client_id spotify-client-id
-           :response_type "code"
-           :redirect_uri "http://localhost:8080/callback"
-           :scope (str "playlist-read-private "
-                       "playlist-modify-private "
-                       "playlist-modify-public")}})]
-    (println (authorization-request :body))
-    (serve-permission-page (authorization-request :body))))
+  ;; TODO OAuth dance, store tokens, auto refresh expiring tokens
 
+  ;; Send user to do auth
+  (browser/browse-url (str "https://accounts.spotify.com/authorize?"
+                           (encode-params
+                            {"client_id" spotify-client-id
+                             "response_type" "code"
+                             "redirect_uri" "http://localhost:8080/callback"
+                             "scope" (str "playlist-read-private "
+                                          "playlist-modify-private "
+                                          "playlist-modify-public")})))
 
+  
+  (println "Starting callback-server on localhost")
+
+  (serve-callback-page)
+  ;; TODO Get token from callback
+  )
 
 (defn add-to-inbox
   "Add song to Inbox-playlist, create it if not existing"
