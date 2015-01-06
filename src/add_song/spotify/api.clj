@@ -4,10 +4,9 @@
    [clj-http.client        :as client]
    [clojure.data.json      :as json]
    [environ.core           :refer [env]]
-   [ring.adapter.jetty :as jetty]
-   [clj-time.local :as l]
+   [ring.adapter.jetty     :as jetty]
+   [clj-time.local         :as l]
    clojure.pprint
-
    ))
 
 
@@ -23,7 +22,43 @@
   (-> (client/get
        (str "http://ws.spotify.com/search/1/track.json?q="
             (str artist " " title)))
-      (:body) (json/read-str :key-fn keyword))
+      (:body) (json/read-str :key-fn keyword)) )
+
+
+(defn serve-permission-page
+  "Show permission page for user"
+  [auth-req-html]
+
+  (def result-promise (promise))
+  (defonce server (jetty/run-jetty #'app {:port 8080 :join? false}))
+  (defn app [request]
+    (def server-log-file (clojure.java.io/writer "server.log" :append true))
+    (defn log-server
+      [what]
+      (binding [*out* server-log-file]
+        (println "" )
+        (println "--log-entry--" (str (l/local-now)))
+        (clojure.pprint/pprint what)))
+
+    (log-server request)
+    (if (= (request :uri) "/callback")
+      (do (log-server "CALLBACK!")
+          ;; Continue with callback response
+          (deliver result-promise request)
+          (.stop server)
+          )
+      (do (log-server "Serve Spotify stuff")
+          ;;TODO need to pass headers and other stuff?
+          {:status 200
+           :headers {"Content-Type" "text/html"}
+           :body auth-req-html})))
+
+  (.start server)
+
+  (println "Started server")
+
+  ;; Wait for servers answer from other thread
+  @result-promise
   )
 
 (defn auth-request
@@ -31,57 +66,20 @@
   https://developer.spotify.com/web-api/authorization-guide/"
   []
   ;; OAuth dance, store tokens, auto refresh expiring tokens
-  (def resp1 (client/get "https://accounts.spotify.com/authorize"
-                         {:query-params {:client_id spotify-client-id
-                                         :response_type "code"
-                                         :redirect_uri "https://github.com/jasalt/clojure-add-song"
-                                         ;;:state opt
-                                         :scope "playlist-read-private playlist-modify-private playlist-modify-public"
-                                         }}))
-  ;;resp1
-  ;;(keys resp1)
-  ;;(resp1 :status)
-  ;;(spit "spotify.html" (resp1 :body))
-  ;;(slurp "spotify.html")
-  )
+  (let [authorization-request
+        (client/get
+         "https://accounts.spotify.com/authorize"
+         {:query-params
+          {:client_id spotify-client-id
+           :response_type "code"
+           :redirect_uri "http://localhost:8080/callback"
+           :scope (str "playlist-read-private "
+                       "playlist-modify-private "
+                       "playlist-modify-public")}})]
+    (println (authorization-request :body))
+    (serve-permission-page (authorization-request :body))))
 
-(defn run-server
-  []
-  (defn app [request]
 
-    (def server-log-file (clojure.java.io/writer "server.log" :append true))
-    (defn log-server
-      [what]
-      (binding [*out* server-log-file]
-        (println "" )
-        (println "--log-entry--" (str (l/local-now)))
-
-        (clojure.pprint/pprint what)
-        )
-      )
-
-    (log-server request)
-
-    (if (= (request :uri) "/callback")
-      (do (log-server "CALLBACK!")
-          ;; Continue with callback response
-          (.stop server)
-          )
-      (do
-        ;;TODO
-        {:status 200
-         :headers {"content-type" "text/clojure"}
-         :body (with-out-str (clojure.pprint/pprint request))}
-        )
-      )
-    )
-
-  (defonce server (jetty/run-jetty #'app {:port 8080 :join? false}))
-
-  (.start server)
-  ;;(.stop server)
-
-  )
 
 (defn add-to-inbox
   "Add song to Inbox-playlist, create it if not existing"
