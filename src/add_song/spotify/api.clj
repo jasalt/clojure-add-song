@@ -1,5 +1,5 @@
 (ns add-song.spotify.api
-  "Spotify API stuff"
+  "Spotify API authentication etc."
   (:require
    [clj-http.client        :as client]
    [clojure.data.json      :as json]
@@ -12,7 +12,6 @@
    [base64-clj.core        :as base64]
    [clojure.pprint         :refer [pprint]]
    ))
-
 
 ;; Load environment variables from ~/.lein/profiles.clj with lein-environ
 ;; leiningen plugin
@@ -35,16 +34,13 @@
             (str artist " " title)))
       (:body) (json/read-str :key-fn keyword)) )
 
-
 (defn serve-callback-page
   "Serve callback page to which Spotify login redirects.
   Return received query params."
   []
-
   (def result-promise (promise))
 
   (defn app [request]
-
     ;; Loggin utility
     (def server-log-file (clojure.java.io/writer "server.log" :append true))
     (defn log-server
@@ -73,16 +69,13 @@
 
   ;; Wait for servers answer from other thread
   @result-promise
-
   )
 
 (defn auth-request
-  "TODO First authorization step described in
+  "First authorization step described in
   https://developer.spotify.com/web-api/authorization-guide/"
   []
-  ;; TODO OAuth dance, store tokens, auto refresh expiring tokens
-
-  ;; Send user to do auth
+  ;; Send user to do authentication in web browser
   (browser/browse-url (str "https://accounts.spotify.com/authorize?"
                            (encode-params
                             {"client_id" spotify-client-id
@@ -92,47 +85,31 @@
                                           "playlist-modify-private "
                                           "playlist-modify-public")})))
 
-
-  (println "Starting callback-server on localhost")
+  (println "Running callback-server on localhost.")
   (println "Please log in and agree to permissions.")
 
   ;; Extract response code from query string
   (get ((ring-params/assoc-query-params (serve-callback-page) "UTF-8")
-        :query-params) "code")
-  )
+        :query-params) "code"))
 
 (defn token-request
-  [auth-code]
+  [authorization-code]
   ;;spotify-client-id
-  (client/post "https://accounts.spotify.com/api/token"
-               {:body (json/write-str
-                       {:grant_type "authorization_code"
-                        :code "AQDklT35YXYfDX1DJdz5Vyb5pLZUbzTbXnuoRIRoptx63IY6xbTTHpuPrLGw9hVPYnlJjo6H9V4qma1tFoYSV7joEwyB-pBzI5gFAmN2HANh6K14mg9EpHvxZLjBmqu3MsjusOvIWtKJI80WzGBCTU2BwW_EwSFdjC9jA1uzGbVjUe-QoqSF_HyEVwRIPXqg1C01wPwvRVpqX1HXdDJLU1yKh6Mbbx2kNuxfa9ug2nNQI_TmoiyQWfFxj-MhyPyhDbGII0CHvnUWSWgO7AHrbao5kOeIsS7WRJkgQA"
-                        :redirect_uri callback-uri})
-                :headers
-                {"Authorization"
-                 (str "Basic "
-                      (base64/encode
-                       (str spotify-client-id ":"
-                            spotify-client-secret)))}
-                :socket-timeout 1000  ;; in milliseconds
-                :conn-timeout 1000    ;; in milliseconds
-                })
+  (let [auth-response (client/post "https://accounts.spotify.com/api/token"
+                                   {:form-params {:grant_type "authorization_code"
+                                                  :code authorization-code
+                                                  :redirect_uri callback-uri}
+                                    :headers
+                                    {"Authorization"
+                                     (str "Basic "
+                                          (base64/encode
+                                           (str spotify-client-id ":"
+                                                spotify-client-secret)))}})]
+    (println "Received auth token")
+    (-> auth-response (:body) (json/read-str :key-fn keyword))))
 
-  ;; TODO remove unneeded post settings
-  ;; Get
-  ;; access_token
-  ;; refresh_token
-  ;; expires_in
-  ;; Save tokens somewhere nice..
-  ;; token_type (Beare) not needed
-
-  )
-
-;;(def auth-code (auth-request))
-;;(println auth-code)
-;;(def auth-tokens (token-request auth-code))
-
+;;(def auth-tokens (token-request (auth-request)))
+;;auth-tokens
 
 (defn oauth-login
   []
