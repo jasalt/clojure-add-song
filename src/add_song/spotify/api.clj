@@ -106,7 +106,7 @@
                                           (base64/encode
                                            (str spotify-client-id ":"
                                                 spotify-client-secret)))}})]
-    (println "Received auth token")
+    (println "Received authorization code")
     (-> auth-response (:body) (json/read-str :key-fn keyword))))
 
 (defn fetch-new-tokens
@@ -127,8 +127,26 @@
 (defn refresh-tokens
   "(6) Use refresh token to get new access token."
   [refresh-token]
-  (println "Implement refresh please.")
-  "refreshed-fake-tokens" ;;TODO 
+  (let [refresh-response (client/post
+                          "https://accounts.spotify.com/api/token"
+                          {:form-params
+                           {:grant_type "refresh_token"
+                            :refresh_token refresh-token}
+                           :headers
+                           {"Authorization"
+                            (str "Basic "
+                                 (base64/encode
+                                  (str spotify-client-id ":"
+                                       spotify-client-secret)))}})
+        fresh-tokens (-> refresh-response (:body)
+                         (json/read-str :key-fn keyword) (merge {:refresh_token refresh-token}))]
+
+    (spit token-cache-file
+          (merge fresh-tokens
+                 {:date (str (l/local-now))}))
+    (println "Token refreshed.")
+    fresh-tokens
+    )
   )
 
 (defn read-cached-tokens
@@ -142,6 +160,7 @@
              (t/in-seconds (t/interval date-cached (l/local-now))))
         cached-tokens
         (refresh-tokens (cached-tokens :refresh_token))))
+
     (catch Exception e (println e) nil)))
 
 (defn get-access-token
