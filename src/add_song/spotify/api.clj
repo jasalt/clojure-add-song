@@ -3,13 +3,14 @@
   (:require
    [clj-http.client        :as client]
    [clojure.data.json      :as json]
+   [clojure.java.io        :as io]
    [environ.core           :refer [env]]
    [ring.adapter.jetty     :as jetty]
    [ring.middleware.params :as ring-params]
    [clj-time.local         :as l]
    [clojure.java.browse    :as browser]
-   [base64-clj.core :as base64]
-   clojure.pprint
+   [base64-clj.core        :as base64]
+   [clojure.pprint         :refer [pprint]]
    ))
 
 
@@ -41,7 +42,7 @@
   []
 
   (def result-promise (promise))
-  
+
   (defn app [request]
 
     ;; Loggin utility
@@ -51,7 +52,7 @@
       (binding [*out* server-log-file]
         (println "" )
         (println "--log-entry--" (str (l/local-now)))
-        (clojure.pprint/pprint what)))
+        (pprint what)))
 
     (log-server request)
 
@@ -59,8 +60,10 @@
       (do (log-server "CALLBACK!")
           ;; Continue with callback response
           (deliver result-promise request)
-          (.stop server)
-          )
+          (future (Thread/sleep 3000) (.stop server))
+          {:status 200
+           :headers {"Content-Type" "text/html"}
+           :body (-> "callback-page.html" io/resource slurp)});
       {:status 200
        :headers {"Content-Type" "text/html"}
        :body "Nothing here... Go to /callback instead."}))
@@ -70,7 +73,7 @@
 
   ;; Wait for servers answer from other thread
   @result-promise
-  
+
   )
 
 (defn auth-request
@@ -104,7 +107,7 @@
   (client/post "https://accounts.spotify.com/api/token"
                {:body (json/write-str
                        {:grant_type "authorization_code"
-                        :code auth-code
+                        :code "AQDklT35YXYfDX1DJdz5Vyb5pLZUbzTbXnuoRIRoptx63IY6xbTTHpuPrLGw9hVPYnlJjo6H9V4qma1tFoYSV7joEwyB-pBzI5gFAmN2HANh6K14mg9EpHvxZLjBmqu3MsjusOvIWtKJI80WzGBCTU2BwW_EwSFdjC9jA1uzGbVjUe-QoqSF_HyEVwRIPXqg1C01wPwvRVpqX1HXdDJLU1yKh6Mbbx2kNuxfa9ug2nNQI_TmoiyQWfFxj-MhyPyhDbGII0CHvnUWSWgO7AHrbao5kOeIsS7WRJkgQA"
                         :redirect_uri callback-uri})
                 :headers
                 {"Authorization"
@@ -112,10 +115,9 @@
                       (base64/encode
                        (str spotify-client-id ":"
                             spotify-client-secret)))}
-                :content-type :json
                 :socket-timeout 1000  ;; in milliseconds
                 :conn-timeout 1000    ;; in milliseconds
-                :accept :json})
+                })
 
   ;; TODO remove unneeded post settings
   ;; Get
@@ -124,11 +126,12 @@
   ;; expires_in
   ;; Save tokens somewhere nice..
   ;; token_type (Beare) not needed
-  
+
   )
 
-(def auth-code (auth-request))
-(def auth-tokens (token-request auth-code))
+;;(def auth-code (auth-request))
+;;(println auth-code)
+;;(def auth-tokens (token-request auth-code))
 
 
 (defn oauth-login
