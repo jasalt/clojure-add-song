@@ -10,6 +10,7 @@
    [ring.adapter.jetty     :as jetty]
    [ring.middleware.params :as ring-params]
    [clj-time.local         :as l]
+   [clj-time.core          :as t]
    [clojure.java.browse    :as browser]
    [base64-clj.core        :as base64]
    [clojure.pprint         :refer [pprint]]
@@ -30,7 +31,7 @@
 (defn encode-params [request-params]
   "Encode map to query string parameters"
   (let [encode #(URLEncoder/encode (str %) "UTF-8")
-        coded (for [[n v] request-params] (str (encode n) "=" (encodev)))]
+        coded (for [[n v] request-params] (str (encode n) "=" (encode v)))]
     (apply str (interpose "&" coded))))
 
 (defn serve-callback-page
@@ -120,36 +121,39 @@
     (if (false? (.isDirectory (io/file token-cache-dir)))
       (.mkdir (io/file token-cache-dir)))
 
-    (spit token-cache-file auth-tokens)
-    ;; TODO save date
-    )
-  )
+    (spit token-cache-file
+          (merge auth-tokens {:date (str (l/local-now))}))))
 
 (defn refresh-tokens
-  "(6) Use refresh token to get new access token"
-  []
-  nil ;;TODO
+  "(6) Use refresh token to get new access token."
+  [refresh-token]
+  (println "Implement refresh please.")
+  "refreshed-fake-tokens" ;;TODO 
   )
 
-(defn read-saved-tokens
+(defn read-cached-tokens
   "Read saved access tokens from file"
   []
   (try
-    (read-string (slurp token-cache-file))
-    (catch Exception e (println "No saved tokens found") nil))
-  )
+    (let [cached-tokens (read-string (slurp token-cache-file))
+          date-cached (l/to-local-date-time (cached-tokens :date))]
+      ;; Check that access token is fresh. Refresh if not.
+      (if (> (cached-tokens :expires_in)
+             (t/in-seconds (t/interval date-cached (l/local-now))))
+        cached-tokens
+        (refresh-tokens (cached-tokens :refresh_token))))
+    (catch Exception e (println e) nil)))
 
-(defn give-tokens
+(defn get-access-token
   "Hands a working Spotify access token, fetches new one if missing."
   []
-  (let [old-tokens (read-saved-token)]
-    (if old-tokens
-      old-tokens ;; TODO Check if old-tokens have dried out
+  (let [cached-tokens (read-cached-tokens)]
+    (if cached-tokens
+      cached-tokens
       (fetch-new-tokens)
       )
     )
   )
-
 
 ;; API operations
 ;; TODO separate namespaces
