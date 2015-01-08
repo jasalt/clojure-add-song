@@ -27,6 +27,18 @@
    )
   )
 
+(defn post-private
+  "POST for private data"
+  [user-id api-endpoint form-params]
+  (client/post (str spotify-api-url "/users/" user-id api-endpoint)
+               {:oauth-token (auth/get-access-token)
+                :throw-entire-message? true
+                :content-type :json
+                :accept :json
+                :form-params form-params}
+               )
+  )
+
 (defn get-user-id
   "Give current users Spotify user_id"
   [] (-> (get-private "/me") parse-body-json (:id)))
@@ -52,27 +64,40 @@
           (println (str "Getting " api-limit " from " iteration-offset " of " api-total))
           (recur (+ iteration-offset api-limit)
                  (concat playlists
-                        ((-> (get-private
-                                     (str "/users/" user-id "/playlists")
-                                     {:query-params {"limit" api-limit "offset" iteration-offset}}) parse-body-json) :items))))))))
+                         ((-> (get-private
+                               (str "/users/" user-id "/playlists")
+                               {:query-params {"limit" api-limit "offset" iteration-offset}}) parse-body-json) :items))))))))
+
+(defn create-playlist
+  [user-id playlist-name]
+  (post-private user-id "/playlists" {:name playlist-name})
+  )
 
 (defn playlist-exists
   "Search user playlist by name."
-  [name]
-  (some #(when (= (% :name) name) %) (list-user-playlists (get-user-id)))
-  )
+  [user-id name]
+  (some #(when (= (% :name) name) %) (list-user-playlists user-id)))
 
-;;(playlist-exists "Himmailumusiikkia")
+(defn add-to-playlist
+  [user-id playlist-id track-id]
+  (post-private user-id "/playlists" {"uris" [track-id]})
+  )
 
 (defn add-to-inbox
   "Add song to Inbox-playlist, create it if not existing"
   [spotify-uri]
-  (let [inbox-playlist
-        ((list-user-playlists (get-user-id))
 
-         )])
-  nil ;; TODO
+  (let [user-id (get-user-id)
+        inbox-playlist (playlist-exists user-id inbox-playlist-name)]
+    (when (nil? inbox-playlist)
+      (pprint "Playlist not found. Creating..")
+      (create-playlist user-id inbox-playlist-name)
+      )
+    (pprint "TODO add song there")
+    )
   )
+
+;;(add-to-inbox ((first ((search-tracks "netsky" "eyes") :tracks)):href))
 
 (defn search-tracks
   "Search track from public Spotify web api"
