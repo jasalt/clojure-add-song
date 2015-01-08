@@ -7,7 +7,19 @@ stations:
   - station: Deep Space One
     network: SomaFM
     song-history-url: http://somafm.com/deepspaceone/songhistory.html
-    acronym: dso
+    acronym: ds1
+  - station: Beat Blender
+    network: SomaFM
+    song-history-url: http://somafm.com/beatblender/songhistory.html
+    acronym: bb
+  - station: Cliqhop IDM
+    network: SomaFM
+    song-history-url: http://somafm.com/cliqhop/songhistory.html
+    acronym: ch
+  - station: Drone Zone
+    network: SomaFM
+    song-history-url: http://somafm.com/dronezone/songhistory.html
+    acronym: dz
   - station: DnB Radio
     network: dnbradio.com
     song-history-url: http://dnbradio.com/
