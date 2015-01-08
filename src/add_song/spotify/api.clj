@@ -1,5 +1,6 @@
 (ns add-song.spotify.api
-  "Spotify API operations."
+  "Spotify API operations.
+  TODO Overgrown syntax trees need some cutting."
   (:require
    [clj-http.client        :as client]
    [clojure.data.json      :as json]
@@ -8,24 +9,21 @@
    ))
 
 (def spotify-api-url "https://api.spotify.com/v1")
-
 (def inbox-playlist-name "script-inbox")
 
 (defn parse-body-json
+  "Parse request body into map"
   [api-response]
-  (-> api-response (:body) (json/read-str :key-fn keyword))
-  )
+  (-> api-response (:body) (json/read-str :key-fn keyword)))
 
 (defn get-private
-  "GET for private data"
+  "GET wrapper for private data"
   ([api-endpoint opt-params]
    (client/get (str spotify-api-url api-endpoint)
                (merge {:oauth-token (auth/get-access-token)
                        :throw-entire-message? true} opt-params)))
   ([api-endpoint]
-   (get-private api-endpoint nil)
-   )
-  )
+   (get-private api-endpoint nil)))
 
 (defn post-private
   "POST for private data"
@@ -35,15 +33,15 @@
                 :throw-entire-message? true
                 :content-type :json
                 :accept :json
-                :form-params form-params}
-               )
-  )
+                :form-params form-params}))
 
 (defn get-user-id
   "Give current users Spotify user_id"
   [] (-> (get-private "/me") parse-body-json (:id)))
 
 (defn list-user-playlists
+  "List all users playlists.
+  TODO Cleanup + parallel requests"
   [user-id]
   (let [first-resp
         (-> (get-private (str "/users/" user-id "/playlists")
@@ -66,36 +64,37 @@
                  (concat playlists
                          ((-> (get-private
                                (str "/users/" user-id "/playlists")
-                               {:query-params {"limit" api-limit "offset" iteration-offset}}) parse-body-json) :items))))))))
-
-(defn create-playlist
-  [user-id playlist-name]
-  (post-private user-id "/playlists" {:name playlist-name})
-  )
+                               {:query-params {"limit" api-limit "offset" iteration-offset}})
+                              parse-body-json) :items))))))))
 
 (defn playlist-exists
   "Search user playlist by name."
   [user-id name]
   (some #(when (= (% :name) name) %) (list-user-playlists user-id)))
 
+(defn create-playlist
+  "Create new playlist for user."
+  [user-id playlist-name]
+  (post-private user-id "/playlists" {:name playlist-name}))
+
 (defn add-to-playlist
+  "Add to users existing playlist"
   [user-id playlist-id track-id]
-  (post-private user-id "/playlists" {"uris" [track-id]})
-  )
+  (println (str "Adding to playlist " playlist-id " track " track-id))
+  (post-private user-id (str "/playlists/" playlist-id "/tracks")
+                {:uris [track-id]}))
 
 (defn add-to-inbox
-  "Add song to Inbox-playlist, create it if not existing"
-  [spotify-uri]
-
+  "Add song to inbox-playlist, create it if not existing"
+  [track-uri]
   (let [user-id (get-user-id)
-        inbox-playlist (playlist-exists user-id inbox-playlist-name)]
-    (when (nil? inbox-playlist)
-      (pprint "Playlist not found. Creating..")
-      (create-playlist user-id inbox-playlist-name)
-      )
-    (pprint "TODO add song there")
-    )
-  )
+        inbox-playlist (:id (playlist-exists user-id
+                                             inbox-playlist-name))]
+    (add-to-playlist user-id
+                     (or inbox-playlist
+                         (:id (create-playlist user-id
+                                               inbox-playlist-name)))
+                     track-uri)))
 
 ;;(add-to-inbox ((first ((search-tracks "netsky" "eyes") :tracks)):href))
 
