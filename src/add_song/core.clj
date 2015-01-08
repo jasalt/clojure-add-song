@@ -48,9 +48,10 @@
   "Temporary function that calls spotify-module"
   [artist title]
   (let [search-result (spotify/search-tracks artist title)]
-    (println (first (search-result :tracks)))
+    (println (str "Adding song " (first (search-result :tracks))))
+    (spotify/add-to-inbox (:href (first (search-result :tracks))))
     )
-  ;; TODO post to user playlist if song found
+  ;; TODO Add some cool and fuzzy algorithm for matching songs better.
   ;; TODO if not found post string to todo.txt (etc)
   )
 
