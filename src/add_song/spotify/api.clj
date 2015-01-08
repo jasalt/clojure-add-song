@@ -33,18 +33,36 @@
 
 (defn list-user-playlists
   [user-id]
-  ;;TODO paginate through all
-  (-> (get-private (str "/users/" user-id "/playlists")
-                   {:query-params {"limit" "50"}})
-      parse-body-json))
+  (let [first-resp
+        (-> (get-private (str "/users/" user-id "/playlists")
+                         {:query-params {"limit" "50"
+                                         "offset" "0"}})
+            parse-body-json)
+        api-limit (first-resp :limit)
+        api-offset (first-resp :offset)
+        api-total (first-resp :total)]
+
+    (loop [iteration-offset (+ api-offset api-limit)
+           playlists (first-resp :items)]
+      (if (< api-total iteration-offset)
+        (do (println "Got all")
+            playlists)
+        (do
+          (println (str "iteration-offset "iteration-offset))
+          (println (str "Getting " api-limit " from " iteration-offset " of " api-total))
+          (recur (+ iteration-offset api-limit)
+                 (concat playlists
+                        ((-> (get-private
+                                     (str "/users/" user-id "/playlists")
+                                     {:query-params {"limit" api-limit "offset" iteration-offset}}) parse-body-json) :items))))))))
 
 (defn playlist-exists
   "Search user playlist by name."
   [name]
-  (some #(when (= (% :name) name) %) ((list-user-playlists (get-user-id)) :items))
+  (some #(when (= (% :name) name) %) (list-user-playlists (get-user-id)))
   )
 
-;;(playlist-exists "Sleep")
+;;(playlist-exists "Himmailumusiikkia")
 
 (defn add-to-inbox
   "Add song to Inbox-playlist, create it if not existing"
