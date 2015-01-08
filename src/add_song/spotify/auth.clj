@@ -39,30 +39,32 @@
   Return received query params."
   []
   (def result-promise (promise))
-  (defonce server (jetty/run-jetty #'app {:port 8080 :join? false}))
-  (defn app [request]
-    ;; Loggin utility
-    (def server-log-file (clojure.java.io/writer "server.log" :append true))
-    (defn log-server
-      [what]
-      (binding [*out* server-log-file]
-        (println "" )
-        (println "--log-entry--" (str (l/local-now)))
-        (pprint what)))
+  
+  (defonce server
+    (jetty/run-jetty
+     (defn app [request]
+       ;; Loggin utility
+       (def server-log-file (clojure.java.io/writer "server.log" :append true))
+       (defn log-server
+         [what]
+         (binding [*out* server-log-file]
+           (println "" )
+           (println "--log-entry--" (str (l/local-now)))
+           (pprint what)))
 
-    (log-server request)
+       (log-server request)
 
-    (if (= (request :uri) "/callback")
-      (do (log-server "CALLBACK!")
-          ;; Continue with callback response
-          (deliver result-promise request)
-          (future (Thread/sleep 3000) (.stop server))
-          {:status 200
-           :headers {"Content-Type" "text/html"}
-           :body (-> "callback-page.html" io/resource slurp)});
-      {:status 200
-       :headers {"Content-Type" "text/html"}
-       :body "Nothing here... Go to /callback instead."}))
+       (if (= (request :uri) "/callback")
+         (do (log-server "CALLBACK!")
+             ;; Continue with callback response
+             (deliver result-promise request)
+             (future (Thread/sleep 3000) (.stop server))
+             {:status 200
+              :headers {"Content-Type" "text/html"}
+              :body (-> "callback-page.html" io/resource slurp)});
+         {:status 200
+          :headers {"Content-Type" "text/html"}
+          :body "Nothing here... Go to /callback instead."})) {:port 8080 :join? false}))
 
   (.start server)
 
