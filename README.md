@@ -9,7 +9,7 @@ Clojure learning project / experimentation.
 
 - [x] Scraping
 
-- [ ] Web API authentication and usage
+- [x] Spotify Web API authentication (authorization code login / OAuth)
 
 ## Resources / Bookmarks on topic
 
