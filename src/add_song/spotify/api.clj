@@ -3,15 +3,13 @@
   (:require
    [clj-http.client        :as client]
    [clojure.data.json      :as json]
-
+   [clojure.pprint         :refer [pprint]]
    [add-song.spotify.auth  :as auth]
    ))
 
-;; API operations
-;; TODO separate namespaces
-;;
-
 (def spotify-api-url "https://api.spotify.com/v1")
+
+(def inbox-playlist-name "script-inbox")
 
 (defn parse-body-json
   [api-response]
@@ -31,13 +29,25 @@
 
 (defn list-user-playlists
   [user-id]
+  ;;TODO paginate through all
   (-> (get-private (str "/users/" user-id "/playlists"))
       parse-body-json))
+
+(defn playlist-exists
+  "Search user playlist by name."
+  [name]
+  (some #(when (= (% :name) name) %) ((list-user-playlists (get-user-id)) :items))
+  )
+
+;;(playlist-exists "Sleep")
 
 (defn add-to-inbox
   "Add song to Inbox-playlist, create it if not existing"
   [spotify-uri]
+  (let [inbox-playlist
+        ((list-user-playlists (get-user-id))
 
+         )])
   nil ;; TODO
   )
 
