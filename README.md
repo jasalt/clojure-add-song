@@ -8,6 +8,8 @@ Clojure learning project / experimentation.
 - [x] Passing command line arguments
 
 - [x] Scraping
+  - [x] Using Enlive
+  - [x] Using webdriver (call ruby script with watir-webdriver)
 
 - [x] Spotify Web API authentication (authorization code login / OAuth)
 

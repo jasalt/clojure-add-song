@@ -15,6 +15,7 @@
                  [environ "1.0.0"]
                  [ring "1.3.2"]
                  [base64-clj "0.1.1"]
+                 [org.clojars.hozumi/clj-commons-exec "1.1.0"]
                  ]
   :main ^:skip-aot add-song.core
   :target-path "target/%s"

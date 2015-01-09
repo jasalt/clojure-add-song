@@ -1,3 +1,0 @@
-[submodule "src/add_song/scrapers/watir-webdriver"]
-	path = src/add_song/scrapers/watir-webdriver
-	url = git@github.com:watir/watir-webdriver.git

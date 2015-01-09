@@ -12,7 +12,6 @@ begin
   b.close
   
   puts response
-  exit 0
 rescue Exception => e
   puts e.message
   puts e.backtrace.inspect
