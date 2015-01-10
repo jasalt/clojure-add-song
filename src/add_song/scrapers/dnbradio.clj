@@ -1,7 +1,6 @@
 (ns add-song.scrapers.dnbradio
   "Scraper for DnB Radio currently playing song
-  Using Ruby watir-webdriver.
-  TODO Catch cookies and just curl."
+  Using Ruby watir-webdriver."
   (:require
    [net.cgrand.enlive-html :as enlive]
    [clojure.string         :as string]
@@ -37,16 +36,19 @@
 
 (defn now-playing
   "Scrape now playing song from specified SomaFM station"
-  [station]
-  (let [process (exec/sh ["ruby" ruby-script-location ]
-                         {:env (merge {"PATH" good-path} damn-ruby)})
-        result (read-string (:out @process))]
-    {:artist (result :artist)
-     :title (clojure.string/replace (result :title) " [playlist rotation]" "")}))
+  ([station](now-playing)) ; Discard given parameter
+  ([]
+   (let [process (exec/sh ["ruby" ruby-script-location]
+                          {:env (merge {"PATH" good-path} damn-ruby)})
+         result (read-string (:out @process))]
+     (if (re-find #"^LIVE SHOW" (result :artist))
+       (do (println "DNB Radio has a live show right now..")
+           (println (str (result :artist) (result :title)))
+           nil)
+       {:artist (result :artist)
+        :title (clojure.string/replace
+                (result :title) " [playlist rotation]" "")}))))
 
-;; :album (nth info-texts 3) ::TODO
-;; :station-time
-
-;; TODO station param not needed, refactor ...
-;; TODO validation, check errors ...
-;; TODO get the cookie and use it with their php api
+;; TODO
+;; Get :album :station-time
+;; Get the cookie and use it with their php api
