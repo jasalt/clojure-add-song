@@ -7,7 +7,9 @@
 
    ;; Own modules/namespaces
    [add-song.spotify.api   :as spotify]
-   [add-song.scrapers.somafm :as sfm]
+   
+   add-song.scrapers.somafm
+   add-song.scrapers.dnbradio
    )(:gen-class))
 
 
@@ -22,7 +24,8 @@
   [station]
   ;;TODO dnbradio.com scraper
   (let [station-network-scrapers
-        {:SomaFM #(add-song.scrapers.somafm/now-playing %)}
+        {:SomaFM #(add-song.scrapers.somafm/now-playing %)
+         :dnbradio.com #(add-song.scrapers.dnbradio/now-playing %)}
 
         scraper (get station-network-scrapers
                      (keyword (station :network)))]
