@@ -32,7 +32,8 @@
                    (env :home) "/.rvm/gems/ruby-2.1.5@global")
    "MY_RUBY_HOME" (str (env :home) "/home/js/.rvm/rubies/ruby-2.1.5")})
 
-(def ruby-script-location (str (.getAbsolutePath (java.io.File. "")) "/src/add_song/scrapers/dnbradio.rb"))
+(def ruby-script-location (str (.getAbsolutePath (java.io.File. ""))
+                               "/src/add_song/scrapers/dnbradio.rb"))
 
 (defn now-playing
   "Scrape now playing song from specified SomaFM station"
@@ -47,7 +48,11 @@
            nil)
        {:artist (result :artist)
         :title (clojure.string/replace
-                (result :title) " [playlist rotation]" "")}))))
+                (result :title) " [playlist rotation]" "")}
+       )
+     )
+   )
+  )
 
 ;; TODO
 ;; Get :album :station-time

@@ -29,7 +29,8 @@
         scraper (get station-network-scrapers
                      (keyword (station :network)))
         scrape-result (scraper station)]
-    (if scrape-result (merge station scrape-result))
+    (if scrape-result (merge station scrape-result)
+        nil)
     )
   )
 
@@ -49,9 +50,16 @@
 (defn post-song
   "Temporary function that calls spotify-module"
   [artist title]
-  (let [search-result (spotify/search-tracks artist title)]
-    (println (str "Adding song " (first (search-result :tracks))))
-    (spotify/add-to-inbox (:href (first (search-result :tracks))))
+  (println (str "Looking for song: " artist " - " title))
+  (let [search-result (spotify/search-tracks artist title)
+        first-track (first (search-result :tracks))]
+    (if (= (search-result :tracks) [])
+      (println "Track not found from Spotify :<")
+      (do
+        (println (type (str "Searchresult: " search-result)))
+        (println (str "Adding first track: " first-track))
+        (spotify/add-to-inbox (:href first-track)))
+      )
     )
   ;; TODO Add some cool and fuzzy algorithm for matching songs better.
   ;; TODO if not found post string to todo.txt (etc)
